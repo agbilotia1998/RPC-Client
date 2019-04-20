@@ -1,24 +1,23 @@
 let proxy = require('./stub/main');
-let str = "Ayush yyyyy";
+let str = "Ayush yyy";
 let num = 4;
-let addResult = add(1, 5);
-let subResult = sub(2, 2);
-let resultCount = find_count(str, 'y');
-let resultEven = is_even(num);
 
+async function main() {
+  let addResult = await add(6, 5);
+  let subResult = await sub(5, 2);
+   //let resultCount = find_count(str, 'y');
+   //let resultEven = await is_even(num);
 
-addResult.then(function (val) {
-  console.log("Addition result => " + val);
-});
+   //console.log(resultEven);
+  console.log("Addition result => " + addResult);
+  console.log("Subtraction result => " + subResult);
+}
 
-subResult.then(function (val) {
-  console.log("Subtraction result => " + val);
-});
-
-resultCount.then(val => {
-  console.log("Count result => " + val);
-});
-
-resultEven.then(val => {
-  console.log("Is Even Result => " + val);
-});
+main();
+// resultCount.then(val => {
+//   console.log("Count result => " + val);
+// });
+//
+// resultEven.then(val => {
+//   console.log("Is Even Result => " + val);
+// });

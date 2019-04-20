@@ -1,5 +1,7 @@
 let request = require('request');
 let fs = require('fs');
+let serviceRequestStatus = require('../request');
+let clientIP = null;
 // function getProcedureName(expression) {
 //   let splitArray = expression.split('(');
 //
@@ -53,6 +55,16 @@ let idl = {
   char: 'char'
 };
 
+async function getClientIP() {
+  return new Promise(function (resolve, reject) {
+    request.get('http://myip.dnsomatic.com/', function (err, res) {
+      clientIP = res.body;
+
+      resolve(clientIP);
+    });
+  })
+}
+
 function marshall(procedure, argTypes, returnType) {
   let allParams = [];
 
@@ -89,7 +101,9 @@ function marshallValue(procedure, argTypes, argValues, returnType) {
   }
 
   let data = { serviceName: procedure,
-    parameters: allParams
+    parameters: allParams,
+    requestID: serviceRequestStatus.services[procedure],
+    clientIp: clientIP
   };
 
   return data;
@@ -98,7 +112,7 @@ function marshallValue(procedure, argTypes, argValues, returnType) {
 let rpcCall = function(xdrData, xdrDataValues) {
   return new Promise(function (resolve, reject) {
     let options = {
-      url: 'https://rpc-registry-server.herokuapp.com/service-provider',
+      url: 'https://registry-service-provider.herokuapp.com/service-provider',
       headers: {
         'data': JSON.stringify(xdrData)
       }
@@ -107,6 +121,7 @@ let rpcCall = function(xdrData, xdrDataValues) {
       if(err) {
         console.log(err);
       }
+      //console.log(res.body)
       let data = JSON.parse(res.body);
       let serverAddress = data.serverAddress;
       //let address = serverAddress.split(':');
@@ -164,11 +179,23 @@ let rpcCall = function(xdrData, xdrDataValues) {
 // }
 
 async function callProcedure(procedure, returnType,  ... arguments) {
+  await getClientIP();
   let argValues = Array.prototype.slice.call(arguments);
   let argTypes = getArguementTypes(argValues);
   let xdrData = marshall(procedure, argTypes, returnType);
   let xdrDataValues = marshallValue(procedure, argTypes, argValues, returnType);
   let result = rpcCall(xdrData, xdrDataValues);
+
+  result.then(() => {
+    let requestID = serviceRequestStatus.services[procedure];
+
+    requestID+= 1;
+    serviceRequestStatus.services[procedure] = requestID;
+
+    fs.writeFileSync('../request.json', JSON.stringify(serviceRequestStatus), (err, res) => {
+
+    });
+  });
 
   return result;
 }
