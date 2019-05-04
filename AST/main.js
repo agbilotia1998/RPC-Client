@@ -2,7 +2,7 @@ const acorn = require('acorn');
 const estraverse =require('estraverse');
 const escodegen = require('escodegen');
 const fs = require('fs');
-const services = require('../../Services/services');
+const services = require('../Services/services');
 
 fs.readFile(process.argv[2], 'utf8', function(err, data) {
   let ast = acorn.parse(data, {

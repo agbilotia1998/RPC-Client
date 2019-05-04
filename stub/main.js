@@ -1,7 +1,7 @@
 let request = require('request');
 let fs = require('fs');
 let serviceRequestStatus = require('../request');
-let clientIP = null;
+let clientIP = serviceRequestStatus.ip;
 // function getProcedureName(expression) {
 //   let splitArray = expression.split('(');
 //
@@ -55,10 +55,12 @@ let idl = {
   char: 'char'
 };
 
-async function getClientIP() {
+function getClientIP() {
   return new Promise(function (resolve, reject) {
     request.get('http://myip.dnsomatic.com/', function (err, res) {
-      clientIP = res.body;
+      if(res.body != null && res.body != '' && res.body) {
+        clientIP = res.body;
+      }
 
       resolve(clientIP);
     });
@@ -179,7 +181,9 @@ let rpcCall = function(xdrData, xdrDataValues) {
 // }
 
 async function callProcedure(procedure, returnType,  ... arguments) {
-  await getClientIP();
+  if(serviceRequestStatus.ip == null) {
+    await getClientIP();
+  }
   let argValues = Array.prototype.slice.call(arguments);
   let argTypes = getArguementTypes(argValues);
   let xdrData = marshall(procedure, argTypes, returnType);
@@ -191,6 +195,7 @@ async function callProcedure(procedure, returnType,  ... arguments) {
 
     requestID+= 1;
     serviceRequestStatus.services[procedure] = requestID;
+    serviceRequestStatus.ip = clientIP;
 
     fs.writeFileSync('../request.json', JSON.stringify(serviceRequestStatus), (err, res) => {
 
